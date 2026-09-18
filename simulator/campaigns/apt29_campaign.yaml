@@ -1,0 +1,71 @@
+name: "APT29 Full Campaign"
+description: "Complete APT29 (Cozy Bear) campaign simulation: phishing -> credential access -> lateral movement -> collection -> exfiltration"
+version: "1.0"
+author: "Security Team"
+tags: ["apt29", "nation-state", "espionage"]
+metadata:
+  actor: "APT29"
+  sophistication: "high"
+  target_sector: "government"
+  estimated_duration_minutes: 120
+
+steps:
+  # Phase 1: Initial Access - Phishing
+  - technique_id: "T1566"
+    repeat: 3
+    delay_range: [0, 60]
+    description: "Spear-phishing emails with malicious attachments"
+
+  # Phase 2: Credential Access - Brute Force
+  - technique_id: "T1110"
+    repeat: 5
+    delay_range: [300, 600]
+    description: "Password spraying against VPN/SSH"
+
+  # Phase 3: Credential Access - OS Credential Dumping
+  - technique_id: "T1003"
+    repeat: 1
+    delay_range: [600, 900]
+    description: "LSASS memory dump for credentials"
+
+  # Phase 4: Discovery - Account Discovery
+  - technique_id: "T1087"
+    repeat: 2
+    delay_range: [900, 1200]
+    description: "Enumerate domain accounts"
+
+  # Phase 5: Discovery - Remote System Discovery
+  - technique_id: "T1018"
+    repeat: 1
+    delay_range: [1200, 1500]
+    description: "Network scanning for targets"
+
+  # Phase 6: Lateral Movement - Remote Services
+  - technique_id: "T1021"
+    repeat: 3
+    delay_range: [1800, 2400]
+    description: "SMB/WinRM lateral movement"
+
+  # Phase 7: Collection - Data from Local System
+  - technique_id: "T1005"
+    repeat: 2
+    delay_range: [2400, 3000]
+    description: "Collect documents from compromised hosts"
+
+  # Phase 8: Collection - Data from Network Shares
+  - technique_id: "T1039"
+    repeat: 1
+    delay_range: [3000, 3300]
+    description: "Access file servers"
+
+  # Phase 9: Exfiltration - Over C2 Channel
+  - technique_id: "T1041"
+    repeat: 1
+    delay_range: [3600, 3900]
+    description: "Exfiltrate via C2 HTTP channel"
+
+  # Phase 10: Defense Evasion - Indicator Removal
+  - technique_id: "T1070"
+    repeat: 1
+    delay_range: [3900, 4200]
+    description: "Clear event logs on compromised systems"

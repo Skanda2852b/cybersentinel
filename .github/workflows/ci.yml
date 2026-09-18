@@ -1,0 +1,234 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & TypeCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Lint Backend
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: TypeCheck Backend
+        working-directory: ./backend
+        run: npx tsc --noEmit
+
+      - name: Lint Frontend
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: TypeCheck Frontend
+        working-directory: ./frontend
+        run: npx tsc --noEmit
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install ML Service dependencies
+        working-directory: ./ml-service
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Lint ML Service (Ruff)
+        working-directory: ./ml-service
+        run: ruff check .
+
+      - name: TypeCheck ML Service (MyPy)
+        working-directory: ./ml-service
+        run: mypy app
+
+      - name: Format Check ML Service (Black)
+        working-directory: ./ml-service
+        run: black --check .
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cybersentinel
+          POSTGRES_PASSWORD: cybersentinel
+          POSTGRES_DB: cybersentinel_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd="pg_isready -U cybersentinel -d cybersentinel_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: ./backend
+        run: npm run db:generate
+
+      - name: Run Migrations
+        working-directory: ./backend
+        run: npm run db:migrate:deploy
+        env:
+          DATABASE_URL: postgresql://cybersentinel:cybersentinel@localhost:5432/cybersentinel_test
+
+      - name: Run Backend Tests
+        working-directory: ./backend
+        run: npm run test
+        env:
+          DATABASE_URL: postgresql://cybersentinel:cybersentinel@localhost:5432/cybersentinel_test
+          NODE_ENV: test
+          JWT_SECRET: test-secret-key-min-32-characters-long
+          JWT_REFRESH_SECRET: test-refresh-secret-key-min-32-characters-long
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run Frontend Tests
+        working-directory: ./frontend
+        run: npm run test
+
+  ml-service-tests:
+    name: ML Service Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install ML Service dependencies
+        working-directory: ./ml-service
+        run: pip install -e ".[dev]"
+
+      - name: Run ML Service Tests
+        working-directory: ./ml-service
+        run: pytest tests/ -v --cov=app --cov-report=xml
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./ml-service/coverage.xml
+          flags: ml-service
+
+  build-docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, backend-tests, frontend-tests, ml-service-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: cybersentinel-backend:${{ github.sha }}
+          target: production
+          load: true
+
+      - name: Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: false
+          tags: cybersentinel-frontend:${{ github.sha }}
+          target: production
+          load: true
+
+      - name: Build ML Service Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ml-service
+          push: false
+          tags: cybersentinel-ml-service:${{ github.sha }}
+          target: production
+          load: true
+
+      - name: Run Docker Compose Integration Test
+        run: |
+          docker-compose -f docker-compose.yml -f docker-compose.ci.yml up -d
+          sleep 10
+          curl -f http://localhost:3000/health
+          curl -f http://localhost:5173
+          curl -f http://localhost:8000/health
+          docker-compose down
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - name: Deploy to Staging
+        run: echo "Deploy to staging environment"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Deploy to Production
+        run: echo "Deploy to production environment"

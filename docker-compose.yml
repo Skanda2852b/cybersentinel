@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cybersentinel-postgres
+    environment:
+      POSTGRES_USER: cybersentinel
+      POSTGRES_PASSWORD: cybersentinel
+      POSTGRES_DB: cybersentinel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cybersentinel -d cybersentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cybersentinel-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: development
+    container_name: cybersentinel-backend
+    environment:
+      DATABASE_URL: "postgresql://cybersentinel:cybersentinel@postgres:5432/cybersentinel"
+      API_PORT: 3000
+      NODE_ENV: "development"
+      JWT_SECRET: "super-secret-jwt-key-change-in-prod-min-32-chars"
+      JWT_EXPIRES_IN: "15m"
+      JWT_REFRESH_SECRET: "super-secret-refresh-key-change-in-prod-min-32-chars"
+      JWT_REFRESH_EXPIRES_IN: "7d"
+      FRONTEND_URL: "http://localhost:5173"
+      INGESTION_API_KEY: "local-dev-ingestion-key-change-in-prod"
+      ML_SERVICE_URL: "http://ml-service:8000"
+      ML_SERVICE_TIMEOUT_MS: "5000"
+      LOG_LEVEL: "debug"
+      LOG_PRETTY: "false"
+      BCRYPT_ROUNDS: "12"
+      COOKIE_SECURE: "false"
+      COOKIE_SAME_SITE: "lax"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ml-service:
+        condition: service_healthy
+    networks:
+      - cybersentinel-network
+    restart: unless-stopped
+    command: sh -c "npm install && npx prisma generate && npx prisma migrate deploy && npm run dev"
+
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: cybersentinel-ml-service
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ml-service:/app
+      - /app/.venv
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - cybersentinel-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: development
+    container_name: cybersentinel-frontend
+    environment:
+      VITE_API_URL: "http://localhost:3000/api/v1"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - cybersentinel-network
+
+volumes:
+  postgres_data:
+
+networks:
+  cybersentinel-network:
+    driver: bridge

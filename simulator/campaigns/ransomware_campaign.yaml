@@ -1,0 +1,59 @@
+name: "Ransomware Campaign"
+description: "LockBit-style ransomware attack: exploit -> escalate -> persist -> encrypt -> ransom"
+version: "1.0"
+author: "Security Team"
+tags: ["ransomware", "lockbit", "financially-motivated"]
+metadata:
+  variant: "LockBit 3.0"
+  ransom_amount: "$50000"
+  target: "enterprise"
+  estimated_duration_minutes: 60
+
+steps:
+  # Phase 1: Initial Access - Exploit Public-Facing Application
+  - technique_id: "T1190"
+    repeat: 1
+    delay_range: [0, 60]
+    description: "Exploit vulnerable VPN appliance (CVE-2021-20016)"
+
+  # Phase 2: Privilege Escalation
+  - technique_id: "T1068"
+    repeat: 1
+    delay_range: [60, 300]
+    description: "Exploit PrintNightmare for SYSTEM"
+
+  # Phase 3: Persistence - Scheduled Task
+  - technique_id: "T1053"
+    repeat: 2
+    delay_range: [300, 600]
+    description: "Create scheduled tasks for persistence"
+
+  # Phase 4: Defense Evasion - Clear Logs
+  - technique_id: "T1070"
+    repeat: 1
+    delay_range: [600, 900]
+    description: "Clear Windows Security/Application logs"
+
+  # Phase 5: Defense Evasion - Disable Security Tools
+  - technique_id: "T1562"
+    repeat: 1
+    delay_range: [900, 1200]
+    description: "Disable Windows Defender via registry"
+
+  # Phase 6: Impact - Data Encryption
+  - technique_id: "T1486"
+    repeat: 8
+    delay_range: [1200, 2400]
+    description: "Encrypt files with AES-256 + RSA"
+
+  # Phase 7: Impact - Inhibit System Recovery
+  - technique_id: "T1490"
+    repeat: 1
+    delay_range: [2400, 2700]
+    description: "Delete shadow copies and disable recovery"
+
+  # Phase 8: Impact - Ransom Note Deployment
+  - technique_id: "T1491"
+    repeat: 1
+    delay_range: [2700, 3000]
+    description: "Drop ransom notes in all directories"

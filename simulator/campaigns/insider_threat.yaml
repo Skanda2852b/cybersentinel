@@ -1,0 +1,71 @@
+name: "Insider Threat Data Exfiltration"
+description: "Malicious insider with privileged access collecting and exfiltrating intellectual property"
+version: "1.0"
+author: "Security Team"
+tags: ["insider-threat", "data-theft", "privileged-access"]
+metadata:
+  actor: "malicious_insider"
+  access_level: "privileged"
+  data_target: "intellectual_property"
+  estimated_duration_minutes: 90
+
+steps:
+  # Phase 1: Discovery - Account Discovery
+  - technique_id: "T1087"
+    repeat: 2
+    delay_range: [0, 300]
+    description: "Enumerate privileged accounts and service accounts"
+
+  # Phase 2: Discovery - System Information Discovery
+  - technique_id: "T1082"
+    repeat: 1
+    delay_range: [300, 600]
+    description: "Gather system and network information"
+
+  # Phase 3: Discovery - File and Directory Discovery
+  - technique_id: "T1083"
+    repeat: 2
+    delay_range: [600, 1200]
+    description: "Search for sensitive documents and source code"
+
+  # Phase 3b: Discovery - Network Share Discovery
+  - technique_id: "T1135"
+    repeat: 1
+    delay_range: [1200, 1500]
+    description: "Map accessible network shares"
+
+  # Phase 4: Collection - Data from Local System
+  - technique_id: "T1005"
+    repeat: 3
+    delay_range: [1500, 2400]
+    description: "Collect source code, designs, and documents"
+
+  # Phase 5: Collection - Data from Network Shared Drive
+  - technique_id: "T1039"
+    repeat: 2
+    delay_range: [2400, 3000]
+    description: "Access engineering file shares"
+
+  # Phase 6: Collection - Archive Collected Data
+  - technique_id: "T1560"
+    repeat: 1
+    delay_range: [3000, 3300]
+    description: "Compress and encrypt collected data"
+
+  # Phase 7: Exfiltration - Over Alternative Protocol (DNS)
+  - technique_id: "T1048"
+    repeat: 1
+    delay_range: [3300, 3900]
+    description: "Exfiltrate via DNS tunneling to avoid detection"
+
+  # Phase 8: Defense Evasion - Timestomp
+  - technique_id: "T1070.006"
+    repeat: 1
+    delay_range: [3900, 4200]
+    description: "Modify file timestamps to hide activity"
+
+  # Phase 9: Defense Evasion - Clear Evidence
+  - technique_id: "T1070"
+    repeat: 1
+    delay_range: [4200, 4500]
+    description: "Clear access logs and recent file lists"

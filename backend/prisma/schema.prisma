@@ -1,0 +1,270 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  passwordHash  String
+  role          Role         @default(ANALYST)
+  firstName     String?
+  lastName      String?
+  isActive      Boolean      @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  assignedIncidents Incident[] @relation("AssignedIncidents")
+  auditLogs     AuditLog[]
+  incidentNotes IncidentNote[]
+
+  @@map("users")
+}
+
+model EventSource {
+  id          String   @id @default(uuid())
+  name        String
+  apiKeyHash  String   @unique
+  type        SourceType
+  description String?
+  isActive    Boolean  @default(true)
+  lastSeenAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  events      Event[]
+
+  @@map("event_sources")
+}
+
+model Event {
+  id           String   @id @default(uuid())
+  sourceId     String
+  source       EventSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  timestamp    DateTime
+  eventType    String
+  severity     Severity @default(LOW)
+  sourceIp     String?
+  destIp       String?
+  username     String?
+  dedupHash    String   @unique
+  metadata     Json
+  createdAt    DateTime @default(now())
+  alerts       EventAlert[]
+  mlPredictions MLPrediction[]
+  iocMatches   IOCMatch[]
+
+  @@index([timestamp], type: Brin)
+  @@index([sourceIp, eventType])
+  @@index([destIp])
+  @@index([username])
+  @@map("events")
+}
+
+model DetectionRule {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  enabled     Boolean  @default(true)
+  logic       Json
+  severity    Severity
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  alerts      Alert[]
+
+  @@index([enabled])
+  @@map("detection_rules")
+}
+
+model Alert {
+  id            String      @id @default(uuid())
+  ruleId        String
+  rule          DetectionRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  severity      Severity
+  riskScore     Float       @default(0)
+  status        AlertStatus @default(OPEN)
+  title         String
+  description   String?
+  explanation   String?
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  acknowledgedAt DateTime?
+  resolvedAt    DateTime?
+  events        EventAlert[]
+  incidents     IncidentAlert[]
+  mlPredictions MLPrediction[]
+
+  @@index([status, severity, createdAt])
+  @@index([ruleId])
+  @@map("alerts")
+}
+
+model EventAlert {
+  eventId  String
+  alertId  String
+  event    Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  alert    Alert   @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, alertId])
+  @@map("event_alerts")
+}
+
+model Incident {
+  id            String         @id @default(uuid())
+  title         String
+  description   String?
+  severity      Severity
+  status        IncidentStatus @default(OPEN)
+  riskScore     Float          @default(0)
+  assignedUserId String?
+  assignedUser  User?          @relation("AssignedIncidents", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  firstSeen     DateTime       @default(now())
+  lastSeen      DateTime       @default(now())
+  resolvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  alerts        IncidentAlert[]
+  notes         IncidentNote[]
+
+  @@index([status, assignedUserId])
+  @@map("incidents")
+}
+
+model IncidentAlert {
+  incidentId String
+  alertId    String
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  alert      Alert    @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@id([incidentId, alertId])
+  @@map("incident_alerts")
+}
+
+model IncidentNote {
+  id          String   @id @default(uuid())
+  incidentId  String
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  createdAt   DateTime @default(now())
+
+  @@map("incident_notes")
+}
+
+model IOC {
+  id          String   @id @default(uuid())
+  type        IOCType
+  value       String
+  confidence  Float    @default(1.0)
+  source      String?
+  tags        String[]
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  matches     IOCMatch[]
+
+  @@unique([type, value])
+  @@index([type, value])
+  @@map("iocs")
+}
+
+model IOCMatch {
+  id        String   @id @default(uuid())
+  iocId     String
+  ioc       IOC      @relation(fields: [iocId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  matchedAt DateTime @default(now())
+
+  @@index([iocId, eventId])
+  @@map("ioc_matches")
+}
+
+model MLPrediction {
+  id            String   @id @default(uuid())
+  eventId       String   @unique
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  alertId       String?
+  alert         Alert?   @relation(fields: [alertId], references: [id], onDelete: SetNull)
+  anomalyScore  Float
+  modelVersion  String
+  featuresUsed  Json
+  createdAt     DateTime @default(now())
+
+  @@index([eventId])
+  @@map("ml_predictions")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String
+  targetEntity String?
+  targetId    String?
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
+
+enum Role {
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum SourceType {
+  AGENT
+  SYSLOG
+  API
+  CLOUD
+  NETWORK
+}
+
+enum Severity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  INVESTIGATING
+  RESOLVED
+  FALSE_POSITIVE
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  CONTAINED
+  ERADICATED
+  RECOVERED
+  CLOSED
+}
+
+enum IOCType {
+  IP
+  DOMAIN
+  URL
+  HASH_MD5
+  HASH_SHA1
+  HASH_SHA256
+  EMAIL
+  CIDR
+  REGISTRY_KEY
+  MUTEX
+}
