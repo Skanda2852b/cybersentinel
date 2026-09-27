@@ -1,6 +1,6 @@
-import { PrismaClient, Alert, AlertStatus, Severity, Event, DetectionRule } from '@prisma/client';
-import { RiskEngine, RiskFactors } from './riskEngine';
-import { getMLClient, NormalizedEvent } from './mlClient';
+import type { PrismaClient, Alert, AlertStatus, Severity, Event, DetectionRule } from '@prisma/client';
+import type { RiskEngine, RiskFactors } from './riskEngine';
+import { getMLClient, type NormalizedEvent } from './mlClient';
 import { logger } from '@utils/logger';
 
 export interface AlertWithEvents extends Alert {

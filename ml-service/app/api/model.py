@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
-import os
+import contextlib
 import logging
+import os
+
+import joblib
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from pydantic import BaseModel
 
 from app.config import settings
 from app.training.train import train_model
@@ -15,40 +17,37 @@ class ModelInfo(BaseModel):
     version: str
     path: str
     exists: bool
-    size_bytes: Optional[int] = None
-    feature_count: Optional[int] = None
-    training_date: Optional[str] = None
+    size_bytes: int | None = None
+    feature_count: int | None = None
+    training_date: str | None = None
 
 
 class TrainRequest(BaseModel):
-    data_path: Optional[str] = None
-    contamination: Optional[float] = None
-    n_estimators: Optional[int] = None
-    max_samples: Optional[int] = None
-    random_state: Optional[int] = None
+    data_path: str | None = None
+    contamination: float | None = None
+    n_estimators: int | None = None
+    max_samples: int | None = None
+    random_state: int | None = None
 
 
 class TrainResponse(BaseModel):
     success: bool
     message: str
-    model_info: Optional[ModelInfo] = None
+    model_info: ModelInfo | None = None
 
 
 @router.get("/info", response_model=ModelInfo)
-async def get_model_info():
+async def get_model_info() -> ModelInfo:
     exists = os.path.exists(settings.MODEL_PATH)
     size = os.path.getsize(settings.MODEL_PATH) if exists else None
 
-    import joblib
     feature_count = None
     training_date = None
     if exists:
-        try:
+        with contextlib.suppress(Exception):
             model_data = joblib.load(settings.MODEL_PATH)
             feature_count = len(model_data.get("feature_names", []))
             training_date = model_data.get("training_date")
-        except:
-            pass
 
     return ModelInfo(
         version=settings.MODEL_VERSION,
@@ -61,12 +60,12 @@ async def get_model_info():
 
 
 @router.post("/train", response_model=TrainResponse)
-async def train_new_model(request: TrainRequest, background_tasks: BackgroundTasks):
+async def train_new_model(
+    request: TrainRequest, background_tasks: BackgroundTasks
+) -> TrainResponse:
     if os.path.exists(settings.MODEL_PATH):
-        try:
+        with contextlib.suppress(OSError):
             os.remove(settings.MODEL_PATH)
-        except:
-            pass
 
     try:
         result = train_model(
@@ -84,11 +83,13 @@ async def train_new_model(request: TrainRequest, background_tasks: BackgroundTas
         )
     except Exception as e:
         logger.error(f"Training failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}") from e
 
 
 @router.post("/train/async", response_model=TrainResponse)
-async def train_new_model_async(request: TrainRequest, background_tasks: BackgroundTasks):
+async def train_new_model_async(
+    request: TrainRequest, background_tasks: BackgroundTasks
+) -> TrainResponse:
     background_tasks.add_task(
         train_model,
         data_path=request.data_path or settings.TRAINING_DATA_PATH,
@@ -105,7 +106,7 @@ async def train_new_model_async(request: TrainRequest, background_tasks: Backgro
 
 
 @router.delete("/model")
-async def delete_model():
+async def delete_model() -> dict[str, bool | str]:
     if os.path.exists(settings.MODEL_PATH):
         os.remove(settings.MODEL_PATH)
         return {"success": True, "message": "Model deleted"}

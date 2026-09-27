@@ -1,4 +1,4 @@
-import { PrismaClient, Incident, IncidentStatus, Severity, Alert, User, DetectionRule, Event } from '@prisma/client';
+import type { PrismaClient, Incident, IncidentStatus, Severity, Alert, User, DetectionRule, Event } from '@prisma/client';
 
 export interface AlertWithRule extends Alert {
   rule?: DetectionRule | null;

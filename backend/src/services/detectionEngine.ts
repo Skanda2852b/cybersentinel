@@ -1,4 +1,4 @@
-import { PrismaClient, DetectionRule, Event, Severity } from '@prisma/client';
+import type { PrismaClient, DetectionRule, Event, Severity } from '@prisma/client';
 
 export interface RuleCondition {
   field?: string;
@@ -156,17 +156,19 @@ export class DetectionEngine {
       case 'count':
         aggregationValue = groupedEvents.length;
         break;
-      case 'uniqueCount':
+      case 'uniqueCount': {
         const uniqueValues = new Set(groupedEvents.map(e => this.getFieldValue(e, condition.aggregationField!)));
         aggregationValue = uniqueValues.size;
         break;
+      }
       case 'sum':
         aggregationValue = groupedEvents.reduce((sum, e) => sum + (Number(this.getFieldValue(e, condition.aggregationField!)) || 0), 0);
         break;
-      case 'avg':
+      case 'avg': {
         const values = groupedEvents.map(e => Number(this.getFieldValue(e, condition.aggregationField!)) || 0);
         aggregationValue = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
         break;
+      }
       default:
         return false;
     }

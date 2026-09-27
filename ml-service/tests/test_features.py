@@ -1,23 +1,23 @@
-import pytest
-import numpy as np
 import pandas as pd
-from datetime import datetime
+import pytest
 
 from app.preprocessing.features import (
-    extract_time_features,
+    engineer_features,
     extract_ip_features,
     extract_metadata_features,
-    engineer_features,
+    extract_time_features,
     prepare_training_data,
 )
 
 
 def test_extract_time_features():
-    timestamps = pd.Series([
-        "2024-01-15T10:30:45Z",
-        "2024-01-15T23:59:59Z",
-        "2024-01-14T00:00:00Z",
-    ])
+    timestamps = pd.Series(
+        [
+            "2024-01-15T10:30:45Z",
+            "2024-01-15T23:59:59Z",
+            "2024-01-14T00:00:00Z",
+        ]
+    )
     features = extract_time_features(timestamps)
 
     assert "hour" in features.columns
@@ -44,13 +44,15 @@ def test_extract_ip_features():
 
 
 def test_extract_metadata_features():
-    metadata = pd.Series([
-        {"count": 5, "port": 22},
-        {"count": 10, "bytes": 1024},
-        {"port": 443},
-        "not a dict",
-        None,
-    ])
+    metadata = pd.Series(
+        [
+            {"count": 5, "port": 22},
+            {"count": 10, "bytes": 1024},
+            {"port": 443},
+            "not a dict",
+            None,
+        ]
+    )
     features = extract_metadata_features(metadata)
 
     assert "meta_count" in features.columns
@@ -62,15 +64,19 @@ def test_extract_metadata_features():
 
 
 def test_engineer_features():
-    df = pd.DataFrame([{
-        "timestamp": "2024-01-15T10:30:45Z",
-        "event_type": "ssh_failed_login",
-        "severity": "HIGH",
-        "source_ip": "192.168.1.100",
-        "dest_ip": "10.0.0.10",
-        "username": "root",
-        "metadata": {"count": 5, "port": 22},
-    }])
+    df = pd.DataFrame(
+        [
+            {
+                "timestamp": "2024-01-15T10:30:45Z",
+                "event_type": "ssh_failed_login",
+                "severity": "HIGH",
+                "source_ip": "192.168.1.100",
+                "dest_ip": "10.0.0.10",
+                "username": "root",
+                "metadata": {"count": 5, "port": 22},
+            }
+        ]
+    )
 
     features = engineer_features(df)
 

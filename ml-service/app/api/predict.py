@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+import logging
+import os
+from typing import Any
+
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-import os
-import logging
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from app.config import settings
 
@@ -16,7 +17,7 @@ _model = None
 _feature_names = None
 
 
-def load_model():
+def load_model() -> None:
     global _model, _feature_names
     if _model is None:
         if os.path.exists(settings.MODEL_PATH):
@@ -27,7 +28,7 @@ def load_model():
                 logger.info(f"Model loaded from {settings.MODEL_PATH}")
             except Exception as e:
                 logger.error(f"Failed to load model: {e}")
-                raise HTTPException(status_code=500, detail="Model loading failed")
+                raise HTTPException(status_code=500, detail="Model loading failed") from e
         else:
             logger.warning("Model file not found, using dummy model for development")
             _model = None
@@ -38,33 +39,34 @@ class EventFeatures(BaseModel):
     timestamp: str
     event_type: str
     severity: str
-    source_ip: Optional[str] = None
-    dest_ip: Optional[str] = None
-    username: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    source_ip: str | None = None
+    dest_ip: str | None = None
+    username: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class PredictRequest(BaseModel):
-    events: List[EventFeatures] = Field(min_items=1, max_items=1000)
-    source_id: Optional[str] = None
+    events: list[EventFeatures] = Field(min_length=1, max_length=1000)
+    source_id: str | None = None
 
 
 class AnomalyPrediction(BaseModel):
     event_index: int
     anomaly_score: float
     is_anomaly: bool
-    features_used: Dict[str, float]
+    features_used: dict[str, float]
 
 
 class PredictResponse(BaseModel):
-    predictions: List[AnomalyPrediction]
+    predictions: list[AnomalyPrediction]
     model_version: str
     processing_time_ms: float
 
 
 @router.post("/predict", response_model=PredictResponse)
-async def predict_anomaly(request: PredictRequest):
+async def predict_anomaly(request: PredictRequest) -> PredictResponse:
     import time
+
     start_time = time.time()
 
     load_model()
@@ -75,16 +77,18 @@ async def predict_anomaly(request: PredictRequest):
     df = pd.DataFrame([e.model_dump() for e in request.events])
 
     if len(df) < settings.MIN_EVENTS_FOR_INFERENCE:
-        logger.warning(f"Only {len(df)} events provided, minimum is {settings.MIN_EVENTS_FOR_INFERENCE}")
+        logger.warning(
+            f"Only {len(df)} events provided, minimum is {settings.MIN_EVENTS_FOR_INFERENCE}"
+        )
 
     features = engineer_features(df)
 
     if _model is not None and _feature_names:
         try:
-            X = features[_feature_names].fillna(0)
-            scores = _model.decision_function(X)
+            x = features[_feature_names].fillna(0)
+            scores = _model.decision_function(x)
             anomaly_scores = -scores
-            predictions = _model.predict(X)
+            predictions = _model.predict(x)
             is_anomaly = predictions == -1
         except Exception as e:
             logger.error(f"Model inference failed: {e}")
@@ -95,14 +99,16 @@ async def predict_anomaly(request: PredictRequest):
         is_anomaly = anomaly_scores > 0.8
 
     results = []
-    for i, (score, anomaly) in enumerate(zip(anomaly_scores, is_anomaly)):
+    for i, (score, anomaly) in enumerate(zip(anomaly_scores, is_anomaly, strict=False)):
         feature_dict = features.iloc[i].to_dict() if i < len(features) else {}
-        results.append(AnomalyPrediction(
-            event_index=i,
-            anomaly_score=float(score),
-            is_anomaly=bool(anomaly),
-            features_used=feature_dict,
-        ))
+        results.append(
+            AnomalyPrediction(
+                event_index=i,
+                anomaly_score=float(score),
+                is_anomaly=bool(anomaly),
+                features_used=feature_dict,
+            )
+        )
 
     processing_time = (time.time() - start_time) * 1000
 
@@ -156,13 +162,16 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
                             metadata_features[col_name] = 0
                         metadata_features.loc[idx, col_name] = v
 
-    features = pd.concat([
-        df[["hour", "minute", "day_of_week", "has_source_ip", "has_dest_ip", "has_username"]],
-        event_type_dummies,
-        severity_dummies,
-        ip_features,
-        metadata_features,
-    ], axis=1)
+    features = pd.concat(
+        [
+            df[["hour", "minute", "day_of_week", "has_source_ip", "has_dest_ip", "has_username"]],
+            event_type_dummies,
+            severity_dummies,
+            ip_features,
+            metadata_features,
+        ],
+        axis=1,
+    )
 
     features = features.fillna(0)
 
@@ -190,12 +199,12 @@ def is_private_ip(ip: str) -> int:
         if first == 192 and second == 168:
             return 1
         return 0
-    except:
+    except Exception:
         return 0
 
 
 @router.get("/features")
-async def get_feature_info():
+async def get_feature_info() -> dict[str, Any]:
     load_model()
     return {
         "feature_names": _feature_names or [],

@@ -28,17 +28,22 @@ def test_predict_endpoint_validation():
 
 
 def test_predict_endpoint_structure():
-    response = client.post("/api/v1/predict", json={
-        "events": [{
-            "timestamp": "2024-01-15T10:30:45Z",
-            "event_type": "ssh_failed_login",
-            "severity": "HIGH",
-            "source_ip": "192.168.1.100",
-            "dest_ip": "10.0.0.10",
-            "username": "root",
-            "metadata": {"count": 5}
-        }]
-    })
+    response = client.post(
+        "/api/v1/predict",
+        json={
+            "events": [
+                {
+                    "timestamp": "2024-01-15T10:30:45Z",
+                    "event_type": "ssh_failed_login",
+                    "severity": "HIGH",
+                    "source_ip": "192.168.1.100",
+                    "dest_ip": "10.0.0.10",
+                    "username": "root",
+                    "metadata": {"count": 5},
+                }
+            ]
+        },
+    )
     assert response.status_code == 200
     data = response.json()
     assert "predictions" in data

@@ -115,6 +115,10 @@ jobs:
           NODE_ENV: test
           JWT_SECRET: test-secret-key-min-32-characters-long
           JWT_REFRESH_SECRET: test-refresh-secret-key-min-32-characters-long
+          FRONTEND_URL: http://localhost:5173
+          INGESTION_API_KEY: ci-test-ingestion-key-16chars
+          ML_SERVICE_URL: http://localhost:8000
+          COOKIE_SECURE: "false"
 
   frontend-tests:
     name: Frontend Tests

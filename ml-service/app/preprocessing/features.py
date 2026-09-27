@@ -1,24 +1,25 @@
+from typing import Any
+
 import pandas as pd
-import numpy as np
-from typing import List, Dict, Any
-from datetime import datetime
 
 
 def extract_time_features(timestamps: pd.Series) -> pd.DataFrame:
     dt = pd.to_datetime(timestamps)
-    return pd.DataFrame({
-        "hour": dt.dt.hour,
-        "minute": dt.dt.minute,
-        "second": dt.dt.second,
-        "day_of_week": dt.dt.dayofweek,
-        "day_of_month": dt.dt.day,
-        "month": dt.dt.month,
-        "is_weekend": (dt.dt.dayofweek >= 5).astype(int),
-        "is_business_hours": ((dt.dt.hour >= 9) & (dt.dt.hour <= 17)).astype(int),
-    })
+    return pd.DataFrame(
+        {
+            "hour": dt.dt.hour,
+            "minute": dt.dt.minute,
+            "second": dt.dt.second,
+            "day_of_week": dt.dt.dayofweek,
+            "day_of_month": dt.dt.day,
+            "month": dt.dt.month,
+            "is_weekend": (dt.dt.dayofweek >= 5).astype(int),
+            "is_business_hours": ((dt.dt.hour >= 9) & (dt.dt.hour <= 17)).astype(int),
+        }
+    )
 
 
-def extract_categorical_features(df: pd.DataFrame, columns: List[str]) -> pd.DataFrame:
+def extract_categorical_features(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     dummies = pd.get_dummies(df[columns], prefix=columns, dtype=int)
     return dummies
 
@@ -30,8 +31,12 @@ def extract_ip_features(ips: pd.Series, prefix: str = "") -> pd.DataFrame:
         lambda x: int(str(x).split(".")[0]) if pd.notna(x) and "." in str(x) else 0
     )
     features[f"{prefix}is_private"] = ips.apply(_is_private_ip)
-    features[f"{prefix}is_loopback"] = ips.apply(lambda x: 1 if pd.notna(x) and str(x).startswith("127.") else 0)
-    features[f"{prefix}is_multicast"] = ips.apply(lambda x: 1 if pd.notna(x) and 224 <= int(str(x).split(".")[0]) <= 239 else 0)
+    features[f"{prefix}is_loopback"] = ips.apply(
+        lambda x: 1 if pd.notna(x) and str(x).startswith("127.") else 0
+    )
+    features[f"{prefix}is_multicast"] = ips.apply(
+        lambda x: 1 if pd.notna(x) and 224 <= int(str(x).split(".")[0]) <= 239 else 0
+    )
     return features
 
 
@@ -50,7 +55,7 @@ def _is_private_ip(ip: Any) -> int:
         if first == 192 and second == 168:
             return 1
         return 0
-    except:
+    except Exception:
         return 0
 
 
@@ -66,7 +71,7 @@ def extract_metadata_features(metadata_series: pd.Series) -> pd.DataFrame:
     for key in sorted(all_keys):
         col_name = f"meta_{key}"
         features[col_name] = metadata_series.apply(
-            lambda x: x.get(key, 0) if isinstance(x, dict) and key in x else 0
+            lambda x, key=key: x.get(key, 0) if isinstance(x, dict) and key in x else 0
         )
 
     return features.fillna(0)
@@ -74,7 +79,7 @@ def extract_metadata_features(metadata_series: pd.Series) -> pd.DataFrame:
 
 def engineer_features(
     df: pd.DataFrame,
-    feature_names: List[str] = None,
+    feature_names: list[str] | None = None,
 ) -> pd.DataFrame:
     df = df.copy()
 
@@ -109,7 +114,7 @@ def engineer_features(
 
 
 def prepare_training_data(
-    events: List[Dict[str, Any]],
+    events: list[dict[str, Any]],
     window_minutes: int = 5,
 ) -> pd.DataFrame:
     df = pd.DataFrame(events)
@@ -122,19 +127,51 @@ def prepare_training_data(
     features_list = []
     for i in range(len(df)):
         window_start = df.iloc[i]["timestamp"] - pd.Timedelta(minutes=window_minutes)
-        window_events = df[(df["timestamp"] >= window_start) & (df["timestamp"] <= df.iloc[i]["timestamp"])]
+        window_events = df[
+            (df["timestamp"] >= window_start) & (df["timestamp"] <= df.iloc[i]["timestamp"])
+        ]
 
         agg_features = {
             "event_count": len(window_events),
-            "unique_event_types": window_events["event_type"].nunique() if "event_type" in window_events.columns else 0,
-            "unique_source_ips": window_events["source_ip"].nunique() if "source_ip" in window_events.columns else 0,
-            "unique_dest_ips": window_events["dest_ip"].nunique() if "dest_ip" in window_events.columns else 0,
-            "unique_users": window_events["username"].nunique() if "username" in window_events.columns else 0,
-            "severity_critical": (window_events["severity"] == "CRITICAL").sum() if "severity" in window_events.columns else 0,
-            "severity_high": (window_events["severity"] == "HIGH").sum() if "severity" in window_events.columns else 0,
-            "severity_medium": (window_events["severity"] == "MEDIUM").sum() if "severity" in window_events.columns else 0,
-            "severity_low": (window_events["severity"] == "LOW").sum() if "severity" in window_events.columns else 0,
-            "severity_info": (window_events["severity"] == "INFO").sum() if "severity" in window_events.columns else 0,
+            "unique_event_types": (
+                window_events["event_type"].nunique()
+                if "event_type" in window_events.columns
+                else 0
+            ),
+            "unique_source_ips": (
+                window_events["source_ip"].nunique() if "source_ip" in window_events.columns else 0
+            ),
+            "unique_dest_ips": (
+                window_events["dest_ip"].nunique() if "dest_ip" in window_events.columns else 0
+            ),
+            "unique_users": (
+                window_events["username"].nunique() if "username" in window_events.columns else 0
+            ),
+            "severity_critical": (
+                (window_events["severity"] == "CRITICAL").sum()
+                if "severity" in window_events.columns
+                else 0
+            ),
+            "severity_high": (
+                (window_events["severity"] == "HIGH").sum()
+                if "severity" in window_events.columns
+                else 0
+            ),
+            "severity_medium": (
+                (window_events["severity"] == "MEDIUM").sum()
+                if "severity" in window_events.columns
+                else 0
+            ),
+            "severity_low": (
+                (window_events["severity"] == "LOW").sum()
+                if "severity" in window_events.columns
+                else 0
+            ),
+            "severity_info": (
+                (window_events["severity"] == "INFO").sum()
+                if "severity" in window_events.columns
+                else 0
+            ),
         }
 
         current_event = window_events.iloc[-1]

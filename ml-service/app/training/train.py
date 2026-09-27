@@ -1,14 +1,18 @@
+import logging
 import os
+from datetime import datetime
+from typing import Any
+
 import joblib
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from typing import Optional, Dict, Any
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from app.preprocessing.features import prepare_training_data
+
+logger = logging.getLogger(__name__)
 
 
 def train_model(
@@ -18,20 +22,33 @@ def train_model(
     max_samples: int = 256,
     random_state: int = 42,
     output_path: str = "/app/models/isolation_forest.joblib",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     if not os.path.exists(data_path):
-        print(f"Training data not found at {data_path}, generating synthetic data...")
+        logger.info(f"Training data not found at {data_path}, generating synthetic data...")
         df = generate_synthetic_training_data()
     else:
         df = pd.read_parquet(data_path)
 
     features_df = prepare_training_data(df.to_dict("records"))
 
-    feature_names = [c for c in features_df.columns if c not in ["timestamp", "event_type", "severity", "source_ip", "dest_ip", "username", "metadata"]]
-    X = features_df[feature_names].fillna(0)
+    feature_names = [
+        c
+        for c in features_df.columns
+        if c
+        not in [
+            "timestamp",
+            "event_type",
+            "severity",
+            "source_ip",
+            "dest_ip",
+            "username",
+            "metadata",
+        ]
+    ]
+    x = features_df[feature_names].fillna(0)
 
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    x_scaled = scaler.fit_transform(x)
 
     model = IsolationForest(
         contamination=contamination,
@@ -41,12 +58,14 @@ def train_model(
         n_jobs=-1,
     )
 
-    model.fit(X_scaled)
+    model.fit(x_scaled)
 
-    pipeline = Pipeline([
-        ("scaler", scaler),
-        ("model", model),
-    ])
+    pipeline = Pipeline(
+        [
+            ("scaler", scaler),
+            ("model", model),
+        ]
+    )
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
@@ -58,14 +77,14 @@ def train_model(
         "n_estimators": n_estimators,
         "max_samples": max_samples,
         "random_state": random_state,
-        "n_samples": len(X),
+        "n_samples": len(x),
         "n_features": len(feature_names),
     }
 
     joblib.dump(model_data, output_path)
 
-    print(f"Model saved to {output_path}")
-    print(f"Features: {len(feature_names)}, Samples: {len(X)}")
+    logger.info(f"Model saved to {output_path}")
+    logger.info(f"Features: {len(feature_names)}, Samples: {len(x)}")
 
     return {
         "version": "1.0.0",
@@ -84,20 +103,29 @@ def generate_synthetic_training_data(n_samples: int = 10000) -> pd.DataFrame:
     timestamps = [base_time + pd.Timedelta(seconds=i * 10) for i in range(n_samples)]
 
     event_types = [
-        "ssh_failed_login", "ssh_success_login", "connection_attempt",
-        "dns_query", "http_request", "file_access", "process_start",
-        "network_connection", "registry_change", "scheduled_task",
+        "ssh_failed_login",
+        "ssh_success_login",
+        "connection_attempt",
+        "dns_query",
+        "http_request",
+        "file_access",
+        "process_start",
+        "network_connection",
+        "registry_change",
+        "scheduled_task",
     ]
 
     severities = ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
     severity_weights = [0.5, 0.3, 0.15, 0.04, 0.01]
 
     data = []
-    for i, ts in enumerate(timestamps):
+    for ts in timestamps:
         is_anomaly = np.random.random() < 0.02
 
         if is_anomaly:
-            event_type = np.random.choice(["ssh_failed_login", "connection_attempt", "network_connection"], p=[0.5, 0.3, 0.2])
+            event_type = np.random.choice(
+                ["ssh_failed_login", "connection_attempt", "network_connection"], p=[0.5, 0.3, 0.2]
+            )
             severity = np.random.choice(["HIGH", "CRITICAL", "MEDIUM"], p=[0.5, 0.3, 0.2])
             source_ip = f"192.168.{np.random.randint(1,255)}.{np.random.randint(1,255)}"
             count = np.random.randint(20, 100)
@@ -107,15 +135,19 @@ def generate_synthetic_training_data(n_samples: int = 10000) -> pd.DataFrame:
             source_ip = f"10.0.{np.random.randint(1,255)}.{np.random.randint(1,255)}"
             count = np.random.randint(1, 5)
 
-        data.append({
-            "timestamp": ts.isoformat(),
-            "event_type": event_type,
-            "severity": severity,
-            "source_ip": source_ip,
-            "dest_ip": f"10.0.0.{np.random.randint(1,255)}" if np.random.random() > 0.3 else None,
-            "username": f"user{np.random.randint(1,50)}" if np.random.random() > 0.5 else None,
-            "metadata": {"count": count, "port": np.random.randint(1, 65535)},
-        })
+        data.append(
+            {
+                "timestamp": ts.isoformat(),
+                "event_type": event_type,
+                "severity": severity,
+                "source_ip": source_ip,
+                "dest_ip": (
+                    f"10.0.0.{np.random.randint(1,255)}" if np.random.random() > 0.3 else None
+                ),
+                "username": f"user{np.random.randint(1,50)}" if np.random.random() > 0.5 else None,
+                "metadata": {"count": count, "port": np.random.randint(1, 65535)},
+            }
+        )
 
     return pd.DataFrame(data)
 

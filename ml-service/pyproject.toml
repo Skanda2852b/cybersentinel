@@ -55,6 +55,10 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 strict = true
 
+[[tool.mypy.overrides]]
+module = ["joblib.*", "pandas.*", "numpy.*", "sklearn.*"]
+ignore_missing_imports = true
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]

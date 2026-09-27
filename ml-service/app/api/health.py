@@ -1,7 +1,7 @@
+import os
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
-import os
 
 from app.config import settings
 
@@ -18,7 +18,7 @@ class HealthResponse(BaseModel):
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check() -> HealthResponse:
     model_exists = os.path.exists(settings.MODEL_PATH)
     return HealthResponse(
         status="healthy" if model_exists else "degraded",
@@ -31,7 +31,7 @@ async def health_check():
 
 
 @router.get("/ready")
-async def readiness_check():
+async def readiness_check() -> dict[str, str]:
     if not os.path.exists(settings.MODEL_PATH):
         raise HTTPException(status_code=503, detail="Model not loaded")
     return {"status": "ready"}

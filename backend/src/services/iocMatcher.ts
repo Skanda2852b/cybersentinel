@@ -1,4 +1,4 @@
-import { PrismaClient, Event, IOC, IOCType } from '@prisma/client';
+import type { PrismaClient, Event, IOC, IOCType } from '@prisma/client';
 
 export interface IOCMatchResult {
   iocId: string;
