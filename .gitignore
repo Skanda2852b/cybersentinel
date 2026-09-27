@@ -45,8 +45,7 @@ coverage/
 # Docker
 docker-compose.override.yml
 
-# Prisma
-backend/prisma/migrations/
+# Prisma (migrations must be committed for CI `migrate deploy`)
 
 # Python
 __pycache__/
