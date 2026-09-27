@@ -51,7 +51,6 @@ export default {
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-up': 'slideUp 0.35s cubic-bezier(0.21, 1.02, 0.73, 1)',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'radar-sweep': 'radarSweep 4s linear infinite',
         'blink-soft': 'blinkSoft 2.4s ease-in-out infinite',
         'scan': 'scan 7s linear infinite',
       },
@@ -61,12 +60,8 @@ export default {
           '100%': { opacity: '1' },
         },
         slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        radarSweep: {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
         },
         blinkSoft: {
           '0%, 100%': { opacity: '1' },

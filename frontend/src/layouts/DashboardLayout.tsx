@@ -93,7 +93,7 @@ export function DashboardLayout() {
         <div className="flex flex-col h-full">
           <div className={cn('flex items-center h-16 px-4 border-b border-gray-200/80 dark:border-white/[0.07]', sidebarOpen ? 'justify-between' : 'justify-center')}>
             <NavLink to="/dashboard" className="flex items-center gap-2.5" aria-label="CyberSentinel">
-              <span className="flex items-center justify-center w-9 h-9 rounded-xl text-white shadow-glow shrink-0" style={{ backgroundImage: 'linear-gradient(135deg, #0369a1 0%, #0ea5e9 50%, #22d3ee 100%)' }}>
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl text-white shadow-glow shrink-0 brand-bg">
                 <Shield className="w-5 h-5" />
               </span>
               {sidebarOpen && (
@@ -166,7 +166,7 @@ export function DashboardLayout() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3 px-2">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 ring-2 ring-cyan-500/30" style={{ backgroundImage: 'linear-gradient(135deg, #0369a1, #22d3ee)' }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm shrink-0 ring-2 ring-cyan-500/30 brand-bg">
                     {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -182,7 +182,7 @@ export function DashboardLayout() {
               </>
             ) : (
               <div className="flex flex-col items-center gap-3">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-cyan-500/30" style={{ backgroundImage: 'linear-gradient(135deg, #0369a1, #22d3ee)' }}>
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-cyan-500/30 brand-bg">
                   {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
                 </div>
                 <Button variant="ghost" size="sm" onClick={logout} aria-label="Sign out" className="text-gray-400 hover:text-red-500">
@@ -226,14 +226,14 @@ export function DashboardLayout() {
                   </span>
                 )}
               </Button>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm ring-2 ring-cyan-500/30" style={{ backgroundImage: 'linear-gradient(135deg, #0369a1, #22d3ee)' }}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm ring-2 ring-cyan-500/30 brand-bg">
                 {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
               </div>
             </div>
           </div>
         </header>
 
-        <main className="p-4 sm:p-6 lg:p-8 console-grid-bg min-h-[calc(100vh-4rem)]" aria-label="Main content">
+        <main className="p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-4rem)]" aria-label="Main content">
           <Outlet />
         </main>
       </div>

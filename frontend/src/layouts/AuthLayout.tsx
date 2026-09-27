@@ -13,13 +13,12 @@ export function AuthLayout() {
       {/* Visual panel */}
       <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#020617] text-white p-12">
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <div className="absolute inset-0 console-grid-bg opacity-100" />
-          <div className="absolute -top-32 -left-32 w-[34rem] h-[34rem] rounded-full opacity-30 blur-3xl" style={{ background: 'radial-gradient(closest-side, #0ea5e9, transparent)' }} />
-          <div className="absolute -bottom-40 -right-24 w-[30rem] h-[30rem] rounded-full opacity-25 blur-3xl" style={{ background: 'radial-gradient(closest-side, #a855f7, transparent)' }} />
+          <div className="absolute -top-32 -left-32 w-[34rem] h-[34rem] rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="absolute -bottom-40 -right-24 w-[30rem] h-[30rem] rounded-full bg-violet-500/10 blur-3xl" />
         </div>
 
         <div className="relative flex items-center gap-3">
-          <span className="flex items-center justify-center w-10 h-10 rounded-xl text-white shadow-glow" style={{ backgroundImage: 'linear-gradient(135deg, #0369a1 0%, #0ea5e9 50%, #22d3ee 100%)' }}>
+          <span className="flex items-center justify-center w-10 h-10 rounded-xl text-white shadow-glow brand-bg">
             <Shield className="w-5 h-5" />
           </span>
           <span className="font-display text-xl font-bold tracking-tight">
@@ -34,7 +33,7 @@ export function AuthLayout() {
           <div className="absolute inset-16 rounded-full border border-cyan-400/25" />
           <div className="absolute inset-24 rounded-full border border-cyan-400/30" />
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-cyan-300 shadow-glow" />
-          <div className="absolute inset-0 animate-radar-sweep rounded-full" style={{ background: 'conic-gradient(from 0deg, rgb(34 211 238 / 0.5), transparent 22%)' }} />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-cyan-400/40 animate-ping" style={{ animationDuration: '2.4s' }} />
           {pulses.map((p, i) => (
             <span key={i} className="absolute w-2.5 h-2.5 -ml-1 -mt-1 rounded-full bg-red-400 animate-blink-soft" style={{ top: p.top, left: p.left, animationDelay: p.delay, boxShadow: '0 0 12px rgb(248 113 113 / 0.9)' }} />
           ))}
@@ -64,11 +63,11 @@ export function AuthLayout() {
       {/* Form panel */}
       <div className="relative flex items-center justify-center p-6 sm:p-10 overflow-hidden">
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-          <div className="absolute -top-24 right-0 w-[26rem] h-[20rem] rounded-full opacity-20 dark:opacity-25 blur-3xl" style={{ background: 'radial-gradient(closest-side, #0ea5e9, transparent)' }} />
+          <div className="absolute -top-24 right-0 w-[26rem] h-[20rem] rounded-full bg-cyan-500/10 dark:bg-cyan-400/10 blur-3xl" />
         </div>
         <div className="w-full max-w-md relative animate-slide-up">
           <div className="lg:hidden flex items-center justify-center gap-2.5 mb-8">
-            <span className="flex items-center justify-center w-10 h-10 rounded-xl text-white shadow-glow" style={{ backgroundImage: 'linear-gradient(135deg, #0369a1 0%, #0ea5e9 50%, #22d3ee 100%)' }}>
+            <span className="flex items-center justify-center w-10 h-10 rounded-xl text-white shadow-glow brand-bg">
               <Shield className="w-5 h-5" />
             </span>
             <span className="font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">

@@ -6,13 +6,11 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-    --console-line: rgb(15 23 42 / 0.07);
   }
 
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --console-line: rgb(148 163 184 / 0.09);
   }
 
   * {
@@ -25,27 +23,10 @@
 
   body {
     @apply bg-[#eef2f7] text-gray-900 antialiased dark:bg-dark-950 dark:text-gray-100;
-    background-image:
-      radial-gradient(ellipse 90% 55% at 50% -20%, rgb(14 165 233 / 0.1), transparent),
-      radial-gradient(ellipse 55% 40% at 100% 0%, rgb(168 85 247 / 0.07), transparent);
-    background-attachment: fixed;
   }
 
   .dark body {
     background-color: #020617;
-    background-image:
-      radial-gradient(ellipse 90% 50% at 50% -22%, rgb(14 165 233 / 0.14), transparent),
-      radial-gradient(ellipse 50% 35% at 95% 5%, rgb(168 85 247 / 0.1), transparent),
-      radial-gradient(ellipse 60% 40% at 5% 100%, rgb(14 165 233 / 0.06), transparent);
-  }
-
-  /* faint blueprint grid over app content */
-  .console-grid-bg {
-    background-image:
-      linear-gradient(var(--console-line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--console-line) 1px, transparent 1px);
-    background-size: 28px 28px;
-    mask-image: radial-gradient(ellipse 100% 70% at 50% 0%, black 30%, transparent 100%);
   }
 
   ::selection {
@@ -64,14 +45,11 @@
   }
 
   .btn-primary {
-    @apply btn text-white shadow-sm relative overflow-hidden;
-    background-image: linear-gradient(135deg, #0369a1 0%, #0ea5e9 55%, #22d3ee 130%);
+    @apply btn bg-primary-600 hover:bg-primary-700 text-white shadow-sm relative overflow-hidden;
     box-shadow: 0 1px 2px rgb(2 132 199 / 0.4), 0 0 12px -4px rgb(34 211 238 / 0.5);
   }
   .btn-primary:hover {
-    @apply shadow-md;
-    filter: brightness(1.08);
-    box-shadow: 0 2px 8px rgb(2 132 199 / 0.45), 0 0 20px -4px rgb(34 211 238 / 0.6);
+    @apply shadow-md bg-primary-700;
   }
 
   .btn-secondary {
@@ -79,12 +57,10 @@
   }
 
   .btn-danger {
-    @apply btn text-white shadow-sm;
-    background-image: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+    @apply btn bg-red-600 hover:bg-red-700 text-white shadow-sm;
   }
   .btn-danger:hover {
     @apply shadow-md;
-    filter: brightness(1.05);
   }
 
   .btn-ghost {
@@ -194,19 +170,28 @@
     @apply text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500;
   }
 
+  /* Solid accent top edge for feature banners */
+  .edge-glow {
+    position: relative;
+  }
+  .edge-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+    background-color: rgb(34 211 238 / 0.7);
+    pointer-events: none;
+  }
+
   /* ---------- Stat cards ---------- */
   .stat-card {
     @apply card card-hover p-5 relative overflow-hidden;
   }
   .stat-card::before {
     content: '';
-    @apply absolute inset-x-0 top-0 h-[2px];
-    background: linear-gradient(90deg, transparent, rgb(34 211 238 / 0.7), transparent);
-  }
-  .stat-card::after {
-    content: '';
-    @apply absolute -top-16 -right-16 w-40 h-40 rounded-full pointer-events-none;
-    background: radial-gradient(closest-side, rgb(14 165 233 / 0.12), transparent);
+    @apply absolute inset-x-0 top-0 h-[2px] bg-cyan-500/70;
   }
 
   .kpi-num {
@@ -277,9 +262,34 @@
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(120deg, #38bdf8, #22d3ee 45%, #a78bfa 90%);
+    @apply text-cyan-700 dark:text-cyan-300;
   }
+
+  /* ---------- Brand flats (single source of truth) ---------- */
+  .brand-bg {
+    @apply bg-primary-600;
+  }
+  .brand-bg-deep {
+    @apply bg-primary-700;
+  }
+  .brand-text {
+    @apply text-cyan-700 dark:text-cyan-300;
+  }
+
+  /* ---------- Stat tiles (flat) ---------- */
+  .tile-cyan { @apply bg-sky-600; }
+  .tile-amber { @apply bg-amber-500; }
+  .tile-red { @apply bg-red-500; }
+  .tile-violet { @apply bg-violet-600; }
+  .tile-indigo { @apply bg-indigo-500; }
+  .tile-crimson { @apply bg-rose-600; }
+
+  /* ---------- Progress bar fills (flat) ---------- */
+  .bar-fill-cyan { @apply bg-cyan-500; }
+  .bar-fill-violet { @apply bg-violet-500; }
+  .bar-fill-red { @apply bg-red-500; }
+  .bar-fill-amber { @apply bg-amber-500; }
+  .bar-fill-green { @apply bg-emerald-500; }
 
   .animate-fade-in {
     animation: fadeIn 0.3s ease-out;

@@ -1,5 +1,5 @@
 import { Card, CardHeader, Button, Badge, useToast } from '@/components/ui';
-import { cn } from '@/utils/helpers';
+import { cn, useChartTheme } from '@/utils/helpers';
 import {
   AlertTriangle,
   FileText,
@@ -19,12 +19,12 @@ import { useAuthStore } from '@/store/authStore';
 import type { DashboardStats } from '@/types/api';
 
 const statCards = [
-  { name: 'Total Events', key: 'totalEvents', icon: Activity, tile: 'linear-gradient(135deg, #0284c7, #22d3ee)' },
-  { name: 'Total Alerts', key: 'totalAlerts', icon: AlertTriangle, tile: 'linear-gradient(135deg, #ea580c, #fbbf24)' },
-  { name: 'Open Alerts', key: 'openAlerts', icon: AlertTriangle, tile: 'linear-gradient(135deg, #dc2626, #fb7185)' },
-  { name: 'Total Incidents', key: 'totalIncidents', icon: FileText, tile: 'linear-gradient(135deg, #7c3aed, #c084fc)' },
-  { name: 'Open Incidents', key: 'openIncidents', icon: FileText, tile: 'linear-gradient(135deg, #4f46e5, #818cf8)' },
-  { name: 'Critical Alerts', key: 'criticalAlerts', icon: Shield, tile: 'linear-gradient(135deg, #991b1b, #ef4444)' },
+  { name: 'Total Events', key: 'totalEvents', icon: Activity, tile: 'tile-cyan' },
+  { name: 'Total Alerts', key: 'totalAlerts', icon: AlertTriangle, tile: 'tile-amber' },
+  { name: 'Open Alerts', key: 'openAlerts', icon: AlertTriangle, tile: 'tile-red' },
+  { name: 'Total Incidents', key: 'totalIncidents', icon: FileText, tile: 'tile-violet' },
+  { name: 'Open Incidents', key: 'openIncidents', icon: FileText, tile: 'tile-indigo' },
+  { name: 'Critical Alerts', key: 'criticalAlerts', icon: Shield, tile: 'tile-crimson' },
 ] as const;
 
 function ThreatHero({ stats }: { stats: DashboardStats | undefined }) {
@@ -97,7 +97,7 @@ function StatCard({ name, value, icon: Icon, tile, trend, spark, sparkStroke }: 
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <div className="p-2.5 rounded-xl text-white shadow-md" style={{ backgroundImage: tile }}>
+          <div className={`p-2.5 rounded-xl text-white shadow-md shrink-0 ${tile}`}>
             <Icon className="w-5 h-5" />
           </div>
           {spark && sparkStroke && <Sparkline data={spark} stroke={sparkStroke} />}
@@ -125,15 +125,16 @@ function ChartTooltip({ active, payload, label, labelFormatter }: any) {
 }
 
 function SeverityDistributionChart({ data }: { data: Array<{ severity: string; count: number }> }) {
+  const chart = useChartTheme();
   return (
     <Card padding="md">
       <CardHeader title="Severity Distribution" description="Alert counts by severity level" />
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="severity" stroke="#64748b" fontSize={12} />
-            <YAxis stroke="#64748b" fontSize={12} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+            <XAxis dataKey="severity" stroke={chart.tick} fontSize={12} />
+            <YAxis stroke={chart.tick} fontSize={12} />
             <Tooltip
               content={<ChartTooltip labelFormatter={(label: string) => `Severity: ${label}`} />}
             />
@@ -153,6 +154,7 @@ function SeverityDistributionChart({ data }: { data: Array<{ severity: string; c
 }
 
 function EventsTimeSeriesChart({ data }: { data: Array<{ timestamp: string; value: number }> }) {
+  const chart = useChartTheme();
   return (
     <Card padding="md">
       <CardHeader title="Events (Last 24h)" description="Ingested event volume over time" />
@@ -165,9 +167,9 @@ function EventsTimeSeriesChart({ data }: { data: Array<{ timestamp: string; valu
                 <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="timestamp" stroke="#64748b" fontSize={11} tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} />
-            <YAxis stroke="#64748b" fontSize={11} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+            <XAxis dataKey="timestamp" stroke={chart.tick} fontSize={11} tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} />
+            <YAxis stroke={chart.tick} fontSize={11} />
             <Tooltip
               content={<ChartTooltip labelFormatter={(label: string) => new Date(label).toLocaleString()} />}
             />
@@ -201,7 +203,7 @@ function TopSourceIPs({ data }: { data: Array<{ ip: string; count: number }> }) 
                 <td>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${(item.count / max) * 100}%`, backgroundImage: 'linear-gradient(90deg, #0284c7, #22d3ee)' }} />
+                      <div className="h-full rounded-full bar-fill-cyan" style={{ width: `${(item.count / max) * 100}%` }} />
                     </div>
                     <span className="text-sm tabular-nums text-gray-600 dark:text-gray-300 w-16 text-right">{item.count.toLocaleString()}</span>
                   </div>
@@ -271,7 +273,7 @@ function TopEventTypes({ data }: { data: Array<{ type: string; count: number }> 
               <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">{item.count.toLocaleString()}</span>
             </div>
             <div className="h-1.5 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
-              <div className="h-full rounded-full" style={{ width: `${(item.count / max) * 100}%`, backgroundImage: 'linear-gradient(90deg, #7c3aed, #c084fc)' }} />
+              <div className="h-full rounded-full bar-fill-violet" style={{ width: `${(item.count / max) * 100}%` }} />
             </div>
           </div>
         ))}
@@ -347,10 +349,13 @@ export function DashboardPage() {
     <div className="space-y-4 animate-fade-in">
       {!isLoading && !error && <ThreatHero stats={stats} />}
       {isAdmin && (
-        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-primary-500/5 ring-1 ring-inset ring-primary-500/20 dark:bg-primary-500/10">
-          <div>
+        <div className="edge-glow overflow-hidden flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-dark-900/80 border border-gray-200/70 dark:border-white/[0.07] shadow-card">
+          <div className="hidden sm:flex w-10 h-10 rounded-xl brand-bg text-white items-center justify-center shadow-glow shrink-0" aria-hidden="true">
+            <Zap className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Live-fire test</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Run 6 canned attack scenarios through the real pipeline and watch every number move.</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Run 6 canned attack scenarios through the real pipeline and watch every number move.</p>
           </div>
           <Button onClick={handleSimulate} loading={runDemo.isPending} className="shrink-0">
             <Zap className="w-4 h-4 mr-2" />

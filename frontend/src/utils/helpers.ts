@@ -1,8 +1,41 @@
+import { useSyncExternalStore } from 'react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+function subscribeThemeChange(callback: () => void) {
+  const observer = new MutationObserver(callback);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  media.addEventListener('change', callback);
+  return () => {
+    observer.disconnect();
+    media.removeEventListener('change', callback);
+  };
+}
+
+function getThemeSnapshot(): boolean {
+  return document.documentElement.classList.contains('dark');
+}
+
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+/** Reactive dark-mode flag that follows the resolved theme (class-based). */
+export function useIsDark(): boolean {
+  return useSyncExternalStore(subscribeThemeChange, getThemeSnapshot, getServerSnapshot);
+}
+
+/** Chart chrome colors that stay legible in both themes. */
+export function useChartTheme() {
+  const dark = useIsDark();
+  return dark
+    ? { grid: 'rgba(148, 163, 184, 0.14)', tick: '#94a3b8', cursor: 'rgba(34, 211, 238, 0.08)' }
+    : { grid: '#e2e8f0', tick: '#64748b', cursor: 'rgba(14,165,233,0.08)' };
 }
 
 export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {

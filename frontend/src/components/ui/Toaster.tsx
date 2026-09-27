@@ -72,36 +72,34 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
     ),
   };
 
-  const bgColors = {
-    success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
-    error: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
-    info: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+  const accents = {
+    success: 'bg-emerald-500',
+    error: 'bg-red-500',
+    warning: 'bg-amber-500',
+    info: 'bg-cyan-500',
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full">
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2.5 max-w-sm w-full">
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className={cn(
-            'flex items-start gap-3 p-4 rounded-lg border shadow-lg animate-slide-up',
-            bgColors[toast.type]
-          )}
+          className="relative overflow-hidden flex items-start gap-3 pl-4 pr-3 py-3.5 rounded-2xl border border-gray-200/70 dark:border-white/[0.08] bg-white/95 dark:bg-dark-900/90 backdrop-blur-xl shadow-card-hover animate-slide-up"
         >
+          <span className={cn('absolute left-0 top-3 bottom-3 w-[3px] rounded-full', accents[toast.type])} aria-hidden="true" />
           <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900 dark:text-gray-100">{toast.title}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{toast.title}</p>
             {toast.message && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{toast.message}</p>
+              <p className="text-[13px] leading-snug text-gray-600 dark:text-gray-400 mt-0.5">{toast.message}</p>
             )}
           </div>
           <button
             onClick={() => onRemove(toast.id)}
-            className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="flex-shrink-0 w-7 h-7 inline-flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-900/5 dark:hover:text-gray-200 dark:hover:bg-white/10 transition-colors"
             aria-label="Dismiss"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>

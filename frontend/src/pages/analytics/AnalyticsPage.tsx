@@ -4,6 +4,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell,
 } from 'recharts';
 import { useDashboardStats, useTimeSeries, useDetectionRules } from '@/api/hooks';
+import { useChartTheme } from '@/utils/helpers';
 
 const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: '#ef4444',
@@ -42,6 +43,7 @@ export function AnalyticsPage() {
   const { data: stats, isLoading: statsLoading, error: statsError } = useDashboardStats();
   const { data: eventsSeries, isLoading: eventsLoading } = useTimeSeries('events', '1h', 24);
   const { data: rules, isLoading: rulesLoading } = useDetectionRules();
+  const chart = useChartTheme();
 
   if (statsError) {
     return (
@@ -67,7 +69,8 @@ export function AnalyticsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="page-title">Analytics</h1>
+        <p className="section-label mb-1">Trends & telemetry</p>
+        <h1 className="page-title font-display">Analytics</h1>
         <p className="page-subtitle">Security metrics and trend analysis from live telemetry</p>
       </div>
 
@@ -78,12 +81,12 @@ export function AnalyticsPage() {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={eventsSeries?.data || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
                   <XAxis
-                    dataKey="timestamp" stroke="#64748b" fontSize={11}
+                    dataKey="timestamp" stroke={chart.tick} fontSize={11}
                     tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   />
-                  <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} />
+                  <YAxis stroke={chart.tick} fontSize={11} allowDecimals={false} />
                   <Tooltip content={<ChartTooltip labelFormatter={(l: string) => new Date(l).toLocaleString()} />} />
                   <Line type="monotone" dataKey="value" name="events" stroke="#0ea5e9" strokeWidth={2} dot={false} activeDot={{ r: 5 }} />
                 </LineChart>
@@ -123,10 +126,10 @@ export function AnalyticsPage() {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={eventTypeData} layout="vertical" margin={{ left: 24 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                  <XAxis type="number" stroke="#64748b" fontSize={11} allowDecimals={false} />
-                  <YAxis type="category" dataKey="type" stroke="#64748b" fontSize={11} width={150} />
-                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(14,165,233,0.08)' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} horizontal={false} />
+                <XAxis type="number" stroke={chart.tick} fontSize={11} allowDecimals={false} />
+                <YAxis type="category" dataKey="type" stroke={chart.tick} fontSize={11} width={150} />
+                <Tooltip content={<ChartTooltip />} cursor={{ fill: chart.cursor }} />
                   <Bar dataKey="count" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -149,7 +152,7 @@ export function AnalyticsPage() {
                     <span className="text-sm tabular-nums text-gray-500 dark:text-gray-400">{item.count.toLocaleString()}</span>
                   </div>
                   <div className="h-2 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${(item.count / maxIp) * 100}%`, backgroundImage: 'linear-gradient(90deg, #0284c7, #22d3ee)' }} />
+                    <div className="h-full rounded-full bar-fill-cyan" style={{ width: `${(item.count / maxIp) * 100}%` }} />
                   </div>
                 </div>
               ))}
