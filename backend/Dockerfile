@@ -5,19 +5,18 @@ RUN apk add --no-cache openssl
 
 FROM base AS development
 ENV NODE_ENV=development
-COPY backend/package*.json ./
-COPY package-lock.json ./
-RUN npm ci
-COPY backend/. .
+COPY package.json ./
+RUN npm install
+COPY . .
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
 FROM base AS builder
 ENV NODE_ENV=production
-COPY backend/package*.json ./
-COPY package-lock.json ./
-RUN npm ci --only=production
-COPY backend/. .
+COPY package.json ./
+RUN npm install --include=dev
+COPY . .
+RUN npm run db:generate
 RUN npm run build
 
 FROM base AS production

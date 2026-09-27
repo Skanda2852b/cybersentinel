@@ -22,8 +22,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
       target: development
     container_name: cybersentinel-backend
     environment:
@@ -83,8 +83,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
       target: development
     container_name: cybersentinel-frontend
     environment:
