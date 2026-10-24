@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import type { Response } from 'express';
 import { z } from 'zod';
+import zxcvbn from 'zxcvbn';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@utils/prisma';
 import { authenticate } from '@middleware/auth';
@@ -18,7 +19,10 @@ const loginSchema = z.object({
 
 const registerSchema = z.object({
   email: z.string().email().max(255),
-  password: z.string().min(8).max(128),
+  password: z.string().min(8).max(128).refine(
+    (password) => zxcvbn(password).score >= 3,
+    { message: 'Password is too weak. Please use a stronger password.' }
+  ),
   firstName: z.string().trim().max(100).optional(),
   lastName: z.string().trim().max(100).optional(),
 });

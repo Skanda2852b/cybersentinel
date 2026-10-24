@@ -56,11 +56,15 @@ __pycache__/
 ml-service/__pycache__/
 ml-service/*.pyc
 ml-service/.pytest_cache/
+ml-service/.ruff_cache/
+.mypy_cache/
 ml-service/.coverage
 ml-service/htmlcov/
 ml-service/models/*.joblib
 ml-service/models/*.pkl
 ml-service/data/
+ml-service/coverage.xml
+ml-service/coverage/
 
 # Frontend
 frontend/dist/

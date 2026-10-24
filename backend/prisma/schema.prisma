@@ -21,6 +21,9 @@ model User {
   assignedIncidents Incident[] @relation("AssignedIncidents")
   auditLogs     AuditLog[]
   incidentNotes IncidentNote[]
+  totpSecret    String?
+  isMfaEnabled  Boolean      @default(false)
+  mfaBackupCodes Json?
 
   @@map("users")
 }

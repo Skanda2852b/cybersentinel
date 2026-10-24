@@ -1,0 +1,78 @@
+groups:
+  - name: cybersentinel_backend
+    rules:
+      - alert: HighErrorRate
+        expr: rate(cybersentinel_http_requests_total{status_code=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate on backend"
+          description: "Error rate is {{ $value }}% over the last 5 minutes"
+
+      - alert: HighAlertVolume
+        expr: rate(cybersentinel_alerts_created_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Unusually high alert volume"
+          description: "More than 100 alerts created per minute over the last 5 minutes"
+
+      - alert: MLAnomalyRateHigh
+        expr: cybersentinel_ml_anomaly_rate > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High ML anomaly rate"
+          description: "ML anomaly rate is {{ $value }} over the last 10 minutes"
+
+      - alert: DetectionLatencyHigh
+        expr: histogram_quantile(0.95, rate(cybersentinel_detection_latency_seconds_bucket[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High detection latency"
+          description: "p95 detection latency is {{ $value }}s over the last 5 minutes"
+
+      - alert: BackendDown
+        expr: up{job="cybersentinel-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend is down"
+          description: "Backend service has been down for more than 1 minute"
+
+  - name: cybersentinel_database
+    rules:
+      - alert: DatabaseConnectionsHigh
+        expr: pg_database_connections{database="cybersentinel"} > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections"
+          description: "More than 80 active connections to the database"
+
+  - name: cybersentinel_ml_service
+    rules:
+      - alert: MLServiceDown
+        expr: up{job="cybersentinel-ml-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ML Service is down"
+          description: "ML Service has been down for more than 1 minute"
+
+      - alert: ModelNotLoaded
+        expr: cybersentinel_ml_model_loaded == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ML Model not loaded"
+          description: "ML model is not loaded in the service"

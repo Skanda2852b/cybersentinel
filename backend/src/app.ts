@@ -13,12 +13,26 @@ import { generalRateLimiter } from './middleware/rateLimiter';
 import { authenticate, AuthenticatedRequest } from './middleware/auth';
 import { prisma } from './utils/prisma';
 import apiRoutes from './api/routes';
+import { metricsMiddleware, metricsHandler } from './utils/metrics';
 
 export const app = express();
 
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", config.FRONTEND_URL || 'http://localhost:5173'],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
 }));
 
 app.use(cors({
@@ -36,6 +50,7 @@ app.use(pinoHttp({ logger: logger as any, genReqId: (req) => req.headers['x-requ
 app.use(requestIdMiddleware);
 app.use(requestLogger);
 app.use(generalRateLimiter);
+app.use(metricsMiddleware);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), service: 'cybersentinel-backend' });
@@ -49,6 +64,8 @@ app.get('/ready', async (_req, res) => {
     res.status(503).json({ status: 'not ready', database: 'disconnected' });
   }
 });
+
+app.get('/metrics', metricsHandler);
 
 app.use('/api', apiRoutes);
 
