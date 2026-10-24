@@ -19,8 +19,10 @@ RUN npm run build
 
 FROM base AS production
 ENV NODE_ENV=production
+RUN addgroup -g 1001 -S nodejs && adduser -S cybersentinel -u 1001
 RUN npm install -g serve
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./
+USER cybersentinel
 EXPOSE 5173
 CMD ["serve", "-s", "dist", "-l", "5173"]

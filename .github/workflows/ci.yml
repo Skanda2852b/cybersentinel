@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -48,15 +48,14 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.1.1
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
       - name: Install ML Service dependencies
         working-directory: ./ml-service
-        run: |
-          pip install -e ".[dev]"
+        run: pip install -e ".[dev]"
 
       - name: Lint ML Service (Ruff)
         working-directory: ./ml-service
@@ -69,6 +68,11 @@ jobs:
       - name: Format Check ML Service (Black)
         working-directory: ./ml-service
         run: black --check .
+
+      - name: pip Audit
+        working-directory: ./ml-service
+        run: pip-audit --desc on-exit || true
+        continue-on-error: true
 
   backend-tests:
     name: Backend Tests
@@ -88,10 +92,10 @@ jobs:
           --health-retries=5
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -130,7 +134,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -150,7 +154,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.1.1
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -169,6 +173,10 @@ jobs:
           files: ./ml-service/coverage.xml
           flags: ml-service
 
+      - name: npm Audit
+        run: npm audit --production
+        continue-on-error: true
+
   build-docker:
     name: Build Docker Images
     runs-on: ubuntu-latest
@@ -179,10 +187,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.3.0
 
       - name: Build Backend Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v5.2.0
         with:
           context: ./backend
           push: false
@@ -191,7 +199,7 @@ jobs:
           load: true
 
       - name: Build Frontend Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v5.2.0
         with:
           context: ./frontend
           push: false
@@ -200,7 +208,7 @@ jobs:
           load: true
 
       - name: Build ML Service Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v5.2.0
         with:
           context: ./ml-service
           push: false

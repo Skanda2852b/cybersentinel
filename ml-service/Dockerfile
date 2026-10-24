@@ -20,8 +20,10 @@ COPY app ./app
 RUN pip install --no-cache-dir .
 
 FROM base AS production
+RUN groupadd -r cybersentinel && useradd -r -g cybersentinel cybersentinel
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app /app
+USER cybersentinel
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
