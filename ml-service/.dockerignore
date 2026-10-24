@@ -9,10 +9,8 @@ __pycache__/
 .env.local
 .git/
 .gitignore
-README.md
 Dockerfile
 .dockerignore
-pyproject.toml
 coverage/
 htmlcov/
 .coverage
