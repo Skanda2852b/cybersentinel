@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button, Input, useToast } from '@/components/ui';
 import { useLogin, useMe } from '@/api/hooks';
+import { useAuthStore } from '@/store/authStore';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -20,6 +21,7 @@ export function LoginPage() {
   const { addToast } = useToast();
   const { mutate: login, isPending: isLoading } = useLogin();
   const { refetch: refetchUser } = useMe();
+  const setUser = useAuthStore((s) => s.setUser);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -33,9 +35,9 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     login({ email: data.email, password: data.password }, {
-      onSuccess: async () => {
+      onSuccess: async (response) => {
         addToast({ type: 'success', title: 'Welcome back!', message: 'You have been signed in.' });
-        await refetchUser();
+        setUser(response.data.user);
         navigate('/dashboard');
       },
       onError: (error: any) => {
