@@ -20,7 +20,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(8).max(128).refine(
-    (password) => zxcvbn(password).score >= 3,
+    (password) => zxcvbn(password).score >= 2,
     { message: 'Password is too weak. Please use a stronger password.' }
   ),
   firstName: z.string().trim().max(100).optional(),
