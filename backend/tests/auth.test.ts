@@ -3,7 +3,9 @@ import request from 'supertest';
 import { app } from '../src/app';
 import { prisma } from '../src/utils/prisma';
 
-const email = `ci-test-${Date.now()}@example.com`;
+import crypto from 'crypto';
+
+const email = `ci-test-${crypto.randomUUID()}@example.com`;
 const password = 'TestPassword123!';
 let userId: string;
 

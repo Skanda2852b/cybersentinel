@@ -4,7 +4,9 @@ import request from 'supertest';
 import { app } from '../src/app';
 import { prisma } from '../src/utils/prisma';
 
-const TEST_KEY = `ci-ingest-key-${Date.now()}`;
+import crypto from 'crypto';
+
+const TEST_KEY = `ci-ingest-key-${crypto.randomUUID()}`;
 const HEADERS = { 'X-API-Key': TEST_KEY };
 let sourceId: string;
 

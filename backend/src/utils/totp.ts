@@ -1,4 +1,4 @@
-import { authenticator } from 'otplib';
+import { TOTP, generateSecret, generateURI, verify } from 'otplib';
 
 export interface TOTPSecret {
   secret: string;
@@ -6,13 +6,14 @@ export interface TOTPSecret {
 }
 
 export function generateTOTPSecret(email: string): TOTPSecret {
-  const secret = authenticator.generateSecret();
-  const otpauthUrl = authenticator.keyuri(email, 'CyberSentinel', secret);
+  const secret = generateSecret();
+  const otpauthUrl = generateURI({ secret, issuer: 'CyberSentinel', label: email });
   return { secret, otpauthUrl };
 }
 
-export function verifyTOTPToken(token: string, secret: string): boolean {
-  return authenticator.verify({ token, secret });
+export async function verifyTOTPToken(token: string, secret: string): Promise<boolean> {
+  const result = await verify({ token, secret });
+  return result.valid;
 }
 
 export function generateBackupCodes(count: number = 8): string[] {

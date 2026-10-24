@@ -24,5 +24,6 @@ export default defineConfig({
     poolOptions: {
       forks: { singleFork: true },
     },
+    setupFiles: ['./vitest.setup.ts'],
   },
 });
