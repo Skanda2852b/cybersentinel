@@ -14,9 +14,10 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { useDashboardStats, useTimeSeries, useRunDemoAttack, useAlerts } from '@/api/hooks';
+import { useDashboardStats, useTimeSeries, useRunDemoAttack, useAlerts, useResetDemoData } from '@/api/hooks';
 import { useAuthStore } from '@/store/authStore';
 import type { DashboardStats } from '@/types/api';
+import { useToast } from '@/components/ui';
 
 const statCards = [
   { name: 'Total Events', key: 'totalEvents', icon: Activity, tile: 'tile-cyan' },
@@ -289,6 +290,7 @@ export function DashboardPage() {
   const { addToast } = useToast();
   const { user } = useAuthStore();
   const runDemo = useRunDemoAttack();
+  const resetData = useResetDemoData();
   const isAdmin = user?.role === 'ADMIN';
 
   const handleSimulate = () => {
@@ -301,6 +303,20 @@ export function DashboardPage() {
       onError: (err: any) => addToast({
         type: 'error', title: 'Demo attack failed',
         message: err.response?.data?.message || 'Could not run the demo attack.',
+      }),
+    });
+  };
+
+  const handleReset = () => {
+    if (!confirm('Reset ALL demo data to zero? This will delete all events, alerts, incidents, and ML predictions. This cannot be undone.')) return;
+    resetData.mutate(undefined, {
+      onSuccess: (res) => {
+        const total = Object.values(res.deleted).reduce((a: number, b: number) => a + b, 0);
+        addToast({ type: 'success', title: 'Demo data cleared', message: `${total} records removed. Dashboard reset to zero.` });
+      },
+      onError: (err: any) => addToast({
+        type: 'error', title: 'Reset failed',
+        message: err.response?.data?.message || 'Could not reset demo data.',
       }),
     });
   };
@@ -357,10 +373,16 @@ export function DashboardPage() {
             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Live-fire test</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Run 6 canned attack scenarios through the real pipeline and watch every number move.</p>
           </div>
-          <Button onClick={handleSimulate} loading={runDemo.isPending} className="shrink-0">
-            <Zap className="w-4 h-4 mr-2" />
-            Simulate Attack
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button onClick={handleReset} loading={resetData.isPending} variant="danger" className="shrink-0">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Reset to Zero
+            </Button>
+            <Button onClick={handleSimulate} loading={runDemo.isPending} className="shrink-0">
+              <Zap className="w-4 h-4 mr-2" />
+              Simulate Attack
+            </Button>
+          </div>
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 stagger">
