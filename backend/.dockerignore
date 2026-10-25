@@ -13,7 +13,5 @@ coverage/
 tests/
 *.sqlite
 *.db
-tsconfig.json
-tsconfig.build.json
 vitest.config.ts
 eslint.config.*
