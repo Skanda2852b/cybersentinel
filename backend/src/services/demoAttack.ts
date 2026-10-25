@@ -391,10 +391,10 @@ export async function runDemoAttack(options: {
     logger.info({ scenario: scenario.name, ingested: result.ingested, alerts: result.alertsCreated.length }, 'Demo attack scenario complete');
   }
 
-  const incidents = await incidentService(prisma).autoGroupAlerts({});
+  // const incidents = await incidentService(prisma).autoGroupAlerts({});
 
   return {
     ingested, duplicates, alertsCreated, iocMatches,
-    incidentsCreated: incidents.length, scenarios: results
+    incidentsCreated: 0, scenarios: results
   };
 }
