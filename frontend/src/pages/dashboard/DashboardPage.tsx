@@ -17,7 +17,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useDashboardStats, useTimeSeries, useRunDemoAttack, useAlerts, useResetDemoData } from '@/api/hooks';
 import { useAuthStore } from '@/store/authStore';
 import type { DashboardStats } from '@/types/api';
-import { useToast } from '@/components/ui';
 
 const statCards = [
   { name: 'Total Events', key: 'totalEvents', icon: Activity, tile: 'tile-cyan' },
